@@ -1,22 +1,37 @@
 # 政大 AI Course Assignment Workflow
 
 ## Purpose
-This workflow enables efficient local development of AI course assignments from 政大 (NCCU) by converting Google Colab notebooks to markdown format. This solves two critical problems:
+This workflow enables efficient local development of AI course assignments from 政大 (NCCU) by converting Google Colab notebooks to markdown format. This solves critical problems:
 1. **Token efficiency**: Jupyter notebooks (.ipynb) consume excessive tokens when working with AI assistants due to their JSON structure and embedded outputs
 2. **Local editing**: Markdown files work seamlessly with neovim and other text editors
+3. **Local GPU execution**: Run assignments locally on Apple Silicon (M3 Pro) with Metal acceleration
+4. **Version control**: Git integration with GitHub for tracking changes
 
 ## Directory Structure
 ```
-colab_assignment/
+colab_assignment/                    # Main repo: nccu-ai-course-assignments
 ├── script/
-│   ├── convert.py           # Main bidirectional converter
-│   ├── notebook_to_md.py    # .ipynb → .md converter
-│   └── md_to_notebook.py    # .md → .ipynb converter
-├── HW 2/                    # Assignment folder
-│   ├── *.ipynb             # Original Colab notebooks from teacher
-│   └── *.md                # Converted markdown for local work
-└── workflow-by-arthur.md    # This file
+│   ├── convert.py                   # Main bidirectional converter
+│   ├── notebook_to_md.py            # .ipynb → .md converter
+│   └── md_to_notebook.py            # .md → .ipynb + .py converter (UPGRADED!)
+├── HW 1/                            # Each HW gets its own folder/submodule
+├── HW 2/                            # Submodule repo: nccu-ai-hw2
+│   ├── pyproject.toml               # uv dependency management
+│   ├── .venv/                       # Python 3.12 virtual environment
+│   ├── *.ipynb                      # Colab notebooks
+│   ├── *.md                         # Markdown for editing
+│   └── *.py                         # Pure Python for local execution (NEW!)
+├── HW 3/                            # Future assignments...
+├── HW N/                            # Each can be its own git submodule
+└── workflow-by-arthur.md            # This file
 ```
+
+## GitHub Repository Structure
+- **Main repo**: https://github.com/Yan-Yu-Lin/nccu-ai-course-assignments
+- **HW submodules** (each assignment can be its own repo):
+  - HW2: https://github.com/Yan-Yu-Lin/nccu-ai-hw2
+  - HW3: https://github.com/Yan-Yu-Lin/nccu-ai-hw3 (future)
+  - etc.
 
 ## Core Workflow
 
@@ -40,20 +55,35 @@ uv run python script/convert.py "HW 2/assignment.ipynb"
 - The markdown format uses **significantly fewer tokens** than notebook JSON
 - Code blocks are clean and properly formatted
 
-### Step 4: Convert Back to Notebook (When Ready to Test)
+### Step 4: Convert Back to Notebook AND Python Script
 ```bash
-# Convert edited markdown back to notebook
+# Convert edited markdown to BOTH notebook and Python script
 uv run python script/convert.py "HW 2/assignment.md"
 
-# Creates: HW 2/assignment_from_md.ipynb
+# Creates TWO files:
+# - HW 2/assignment_from_md.ipynb  # For Colab
+# - HW 2/assignment.py              # For local execution
 ```
 
-### Step 5: Upload to Colab for GPU Testing
-1. Open [Google Colab](https://colab.research.google.com)
-2. File → Upload notebook
-3. Select the converted `.ipynb` file
-4. Run with GPU acceleration
-5. Submit via Colab sharing link
+**The converter automatically:**
+- Filters out `!pip install` commands → `# COLAB ONLY: !pip install gradio`
+- Comments magic commands → `# JUPYTER MAGIC: %matplotlib inline`
+- Generates pure Python code ready for local execution
+
+### Step 5A: Run Locally with GPU (Apple Silicon)
+```bash
+cd "HW 2"
+# Dependencies managed by uv (requires Python 3.12 for tensorflow-metal)
+uv sync
+uv run python assignment.py
+```
+
+### Step 5B: Or Use GitHub + Colab Integration
+1. Push to GitHub: `git push`
+2. Open Colab → File → Open notebook → GitHub tab
+3. Enter: `Yan-Yu-Lin/nccu-ai-hw2`
+4. Select notebook and run with GPU
+5. File → Save to GitHub creates a commit!
 
 ## Why This Workflow Works
 
@@ -72,37 +102,68 @@ The current assignment involves building a 3-layer neural network for MNIST digi
 ## Quick Commands Reference
 
 ```bash
-# Check what assignments you have
-ls "HW 2/"
+# Initialize assignment folder with uv
+cd "HW 2"
+uv init
+uv python pin 3.12  # Required for tensorflow-metal
+uv add tensorflow tensorflow-metal numpy matplotlib pillow gradio ipywidgets
 
 # Convert notebook → markdown (for editing)
 uv run python script/convert.py "HW 2/example-assignment-based-on-teacher.ipynb"
 
-# Convert markdown → notebook (for Colab upload)
-uv run python script/convert.py "HW 2/example-assignment-based-on-teacher.md"
-
-# View markdown in terminal (quick check)
-cat "HW 2/example-assignment-based-on-teacher.md"
-
 # Edit with neovim
 nvim "HW 2/example-assignment-based-on-teacher.md"
+
+# Convert markdown → notebook + Python script
+uv run python script/convert.py "HW 2/example-assignment-based-on-teacher.md"
+# Creates BOTH .ipynb and .py files!
+
+# Run locally with GPU
+uv run python "HW 2/example-assignment-based-on-teacher.py"
+
+# Git operations
+git add .
+git commit -m "Update assignment"
+git push  # Syncs to GitHub
 ```
 
 ## Important Notes
 
-1. **Always keep the original notebook** from the teacher as backup
-2. **Work primarily in markdown** for efficiency
-3. **Only convert to notebook** when ready to test on Colab GPU
-4. **Submit via Colab link**, not the local files
-5. **No git/gist needed** - direct download from Colab is the source
+1. **Python Version**: Must use Python 3.12 for tensorflow-metal compatibility
+2. **Converter now generates TWO outputs**: `.ipynb` for Colab AND `.py` for local execution
+3. **Colab commands filtered**: `!pip` and `%magic` commands are automatically commented out in `.py`
+4. **GitHub integration**: Saving in Colab creates commits in your GitHub repo
+5. **Local GPU works**: M3 Pro Metal acceleration available with tensorflow-metal
+
+## Dependencies Management with uv
+
+```bash
+# Key requirements for local GPU execution
+Python 3.12 (not 3.13!)
+tensorflow==2.16.2  # Compatible with tensorflow-metal
+tensorflow-metal==1.2.0  # For Apple Silicon GPU
+numpy<2.0  # Required by TensorFlow 2.16
+```
 
 ## Benefits Summary
 
-✅ **Efficient AI assistance** - Uses far fewer tokens
-✅ **Better editor support** - Works perfectly with neovim
-✅ **Clean code view** - No JSON clutter or embedded outputs
-✅ **Local development** - Work offline, test online
-✅ **Preserves structure** - Maintains all cells and content
+✅ **Token efficiency** - 96% reduction in file size for AI assistance
+✅ **Dual output** - Generate both .ipynb and .py from single markdown source
+✅ **Local GPU execution** - Run on M3 Pro with Metal acceleration
+✅ **Version control** - GitHub repos for tracking changes
+✅ **Colab integration** - Open from GitHub, save creates commits
+✅ **Clean Python code** - Filtered for local execution without Colab dependencies
+✅ **Neovim compatible** - Edit markdown efficiently in terminal
+
+## Workflow Comparison
+
+| Task | Old Way | New Way |
+|------|---------|---------|
+| Edit | Colab web editor | Neovim (local) |
+| AI assistance | Upload huge .ipynb | Use tiny .md file |
+| Run locally | Not possible | `uv run python script.py` with GPU |
+| Version control | Manual download/upload | Git + GitHub |
+| Submission | Share Colab link | Push to GitHub → Open in Colab |
 
 ---
-*Workflow created for 政大 AI course assignments - optimized for local development with AI assistance*
+*Enhanced workflow for 政大 AI course - Now with local GPU execution, GitHub integration, and dual notebook/Python output*
