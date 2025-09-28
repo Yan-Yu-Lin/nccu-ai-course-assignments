@@ -32,7 +32,7 @@ def main():
         print(f"📓 Converting notebook to markdown...")
         notebook_to_markdown(str(input_file), output_file)
     elif input_file.suffix == '.md':
-        print(f"📝 Converting markdown to notebook...")
+        print(f"📝 Converting markdown to notebook AND Python script...")
         markdown_to_notebook(str(input_file), output_file)
     else:
         print(f"❌ Error: Unsupported file type '{input_file.suffix}'")

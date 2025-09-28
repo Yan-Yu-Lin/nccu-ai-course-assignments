@@ -1,12 +1,49 @@
 #!/usr/bin/env python3
 """
-Convert Markdown file back to Jupyter notebook format
+Convert Markdown file back to Jupyter notebook format AND Python script
 Parses markdown and recreates notebook structure with code and markdown cells
+Also generates a clean Python script for local execution
 """
 import json
 import sys
 import re
 from pathlib import Path
+
+
+def extract_python_code(markdown_content):
+    """Extract only Python code from markdown, filtering out Colab-specific commands"""
+    python_lines = []
+    lines = markdown_content.split('\n')
+    i = 0
+    in_code_block = False
+
+    while i < len(lines):
+        line = lines[i]
+
+        # Check for code block start
+        if line.startswith('```python'):
+            in_code_block = True
+            i += 1
+            continue
+        elif line.startswith('```') and in_code_block:
+            in_code_block = False
+            python_lines.append('\n')  # Add blank line between code blocks
+            i += 1
+            continue
+
+        # Process code content
+        if in_code_block:
+            # Skip Colab-specific commands
+            if line.strip().startswith('!'):  # Skip shell commands like !pip install
+                python_lines.append(f"# COLAB ONLY: {line}\n")
+            elif line.strip().startswith('%'):  # Skip magic commands like %matplotlib
+                python_lines.append(f"# JUPYTER MAGIC: {line}\n")
+            else:
+                python_lines.append(line + '\n')
+
+        i += 1
+
+    return ''.join(python_lines)
 
 
 def parse_markdown_to_cells(markdown_content):
@@ -121,18 +158,24 @@ def parse_markdown_to_cells(markdown_content):
 
 
 def markdown_to_notebook(input_file, output_file=None):
-    """Convert Markdown file to Jupyter notebook format"""
+    """Convert Markdown file to Jupyter notebook format AND Python script"""
 
     input_path = Path(input_file)
     if output_file is None:
         output_file = input_path.stem + '_from_md.ipynb'
 
+    # Also determine Python output file name
+    python_output_file = input_path.with_suffix('.py')
+
     # Read markdown file
     with open(input_file, 'r', encoding='utf-8') as f:
         markdown_content = f.read()
 
-    # Parse markdown to cells
+    # Parse markdown to cells for notebook
     cells = parse_markdown_to_cells(markdown_content)
+
+    # Extract Python code for .py file
+    python_code = extract_python_code(markdown_content)
 
     # Create notebook structure
     notebook = {
@@ -168,19 +211,31 @@ def markdown_to_notebook(input_file, output_file=None):
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(notebook, f, indent=2, ensure_ascii=False)
 
+    # Write Python script
+    with open(python_output_file, 'w', encoding='utf-8') as f:
+        f.write(f"#!/usr/bin/env python3\n")
+        f.write(f'"""\n')
+        f.write(f'Python script generated from: {input_file}\n')
+        f.write(f'Generated on: {Path(input_file).stat().st_mtime}\n')
+        f.write(f'Note: Colab-specific commands (!pip, %magic) have been commented out\n')
+        f.write(f'"""\n\n')
+        f.write(python_code)
+
     # Print statistics
     input_size = input_path.stat().st_size / 1024  # KB
-    output_size = Path(output_file).stat().st_size / 1024  # KB
+    notebook_size = Path(output_file).stat().st_size / 1024  # KB
+    python_size = Path(python_output_file).stat().st_size / 1024  # KB
 
     print(f"✅ Conversion complete!")
     print(f"📝 Input: {input_file} ({input_size:.1f} KB)")
-    print(f"📓 Output: {output_file} ({output_size:.1f} KB)")
+    print(f"📓 Notebook: {output_file} ({notebook_size:.1f} KB)")
+    print(f"🐍 Python: {python_output_file} ({python_size:.1f} KB)")
 
     # Count cells
     code_cells = sum(1 for c in cells if c['cell_type'] == 'code')
     md_cells = sum(1 for c in cells if c['cell_type'] == 'markdown')
     print(f"📊 Created {code_cells} code cells and {md_cells} markdown cells")
-    print(f"🚀 Ready to upload to Colab!")
+    print(f"🚀 Notebook ready for Colab, Python script ready for local execution!")
 
     return str(output_file)
 
