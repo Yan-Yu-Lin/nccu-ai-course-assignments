@@ -1,131 +1,75 @@
-# Colab Assignment Workflow 🚀
+# 政大 AI 課程作業
 
-## Complete Bidirectional Workflow
+學生：北科大 電子四甲 林晏宇 111360128
 
-### Tools Created:
-1. **`convert.py`** - Auto-detects and converts between formats
-2. **`notebook_to_md.py`** - Notebook → Markdown converter
-3. **`md_to_notebook.py`** - Markdown → Notebook converter
+## 為什麼建立這個 repo？
 
-## Quick Start
+我平常寫程式都習慣在本地跑，主要是因為本地有我熟悉的 AI 工具像是 Claude Code 和 Codex CLI Agent，它們可以直接讀取檔案、執行指令，協助我寫程式和做實驗。
 
-### One Command Conversion:
-```bash
-# Convert notebook to markdown (for Claude/editing)
-uv run python convert.py assignment.ipynb
-# Creates: assignment.md
+一開始做作業時發現課程都是用 Google Colab，雖然 Colab 網頁上有 Gemini，但我不太習慣用 Gemini。所以想把作業搬到本地來做，這樣我的 AI 工具可以更好地協助我，而且本地環境我也比較熟悉，可以直接跑程式測試。
 
-# Convert markdown back to notebook (for Colab)
-uv run python convert.py assignment.md
-# Creates: assignment_from_md.ipynb
-```
+## 遇到的問題
 
-## Complete Workflow
+把 Jupyter notebook 載下來後遇到一個問題：notebook 是 JSON 格式，裡面有很多 metadata 和輸出結果，當 AI 讀取時會消耗大量的 token，而且不容易編輯。一個簡單的作業檔案可能就要幾十 KB，但實際的程式碼可能只有幾 KB。
 
-### 1️⃣ Download from Colab/Gist
-```bash
-# If you have a gist
-git clone https://gist.github.com/YOUR_GIST_ID.git
+## 解決方案：轉換工具
 
-# Or download from Colab
-# File → Download → Download .ipynb
-```
+我請 Claude Code 幫我寫了三個轉換腳本：
 
-### 2️⃣ Convert to Markdown for Local Editing
-```bash
-uv run python convert.py assignment.ipynb
-# Creates assignment.md (96% smaller!)
-```
+1. **`convert.py`** - 雙向轉換器，自動判斷檔案格式
+2. **`notebook_to_md.py`** - 把 .ipynb 轉成 Markdown（檔案大小減少 96%！）
+3. **`md_to_notebook.py`** - 把 Markdown 轉回 .ipynb 和 .py
 
-### 3️⃣ Edit with Claude Code
-- Open `assignment.md` in your editor
-- Make changes with Claude's help
-- Much more efficient (uses less context)
+### 工作流程
 
-### 4️⃣ Convert Back to Notebook
-```bash
-uv run python convert.py assignment.md
-# Creates assignment_from_md.ipynb
-```
+1. 從 Colab 下載老師的範例 notebook
+2. 用 `convert.py` 轉成 Markdown
+3. 在本地用 neovim 編輯，AI 工具可以直接讀取和協助
+4. 完成後轉回 notebook 上傳 Colab
+5. 同時生成 .py 檔案可以在本地測試
 
-### 5️⃣ Upload to Colab
-1. Open [Google Colab](https://colab.research.google.com)
-2. File → Upload notebook
-3. Select `assignment_from_md.ipynb`
-4. Test with GPU
-5. Share link with teacher
+這樣檔案小很多，AI 處理起來更有效率，我編輯也更方便。
 
-## Why This Works
+## 作業內容
 
-### Benefits:
-- ✅ **96% smaller files** when in Markdown
-- ✅ **Preserves all code** and markdown cells
-- ✅ **No outputs** = cleaner version control
-- ✅ **Claude-friendly** = uses much less context
-- ✅ **Round-trip safe** = convert back and forth
+### HW1 - 畫函數圖形
+學習用 matplotlib 畫各種數學函數的圖形。
 
-### The Problem It Solves:
-- Gists don't sync with Colab (one-way export)
-- Notebooks are huge (embedded images, outputs)
-- Claude gets overwhelmed with notebook JSON
-- You want to develop locally but test on Colab GPU
+### HW2 - 打造自己的 DNN（全連結）手寫辨識
+實作 4 層神經網路做 MNIST 手寫數字辨識。我還找了不同的 AI 工具來幫忙寫不同版本，比較它們的方法和效果：
+- 老師版本（我改的）：89.99% 準確率
+- Claude Code 版本：87.75%（訓練過程出問題）
+- Codex 版本：97.78%（最好的結果）
 
-## Advanced Usage
+### HW3 - 認識 Softmax
+實作 Softmax 函數，觀察「贏者通吃」的現象。用互動式介面讓使用者輸入不同數值，看看 Softmax 如何把數值轉換成機率分布。
 
-### Custom Output Names:
-```bash
-# Specify output file
-uv run python convert.py input.ipynb output.md
-uv run python convert.py input.md output.ipynb
-```
+## 心得
 
-### Direct Script Usage:
-```bash
-# If you need specific converter
-uv run python notebook_to_md.py assignment.ipynb
-uv run python md_to_notebook.py assignment.md
-```
+在做作業的過程中發現，有一個聰明且有完整系統權限的 AI 在旁邊協助真的很重要。它們可以幫我寫程式、解釋原理、找錯誤，還能做一些我自己辦不到的實驗。
 
-## Tips
+比如 HW2 的時候，我自己改完老師的範例後就沒想法了，但 AI 工具可以提供完全不同的思路和技術，雖然不是每個都成功（Claude Code 的版本就訓練爆炸了），但這個過程讓我學到很多不同的方法。
 
-1. **Keep markdown version in git** (smaller, cleaner diffs)
-2. **Only convert to notebook when ready to test**
-3. **Use Colab for GPU, local for development**
-4. **Share Colab link, not gist, for submissions**
+這個 workflow 讓我可以在熟悉的環境下學習，同時保持跟 Colab 的相容性，對我來說是最好的學習方式。
 
-## File Structure
+## 技術細節
+
+- Python 環境管理：使用 `uv`
+- 本地 GPU：Apple M3 Pro with Metal acceleration
+- 編輯器：Neovim
+- AI 工具：Claude Code、Codex CLI Agent
+
+## 檔案結構
+
 ```
 colab_assignment/
-├── assignment.ipynb         # Original notebook
-├── assignment.md            # Markdown version (edit this)
-├── assignment_from_md.ipynb # Converted back (upload to Colab)
-├── convert.py               # Main converter
-├── notebook_to_md.py        # Notebook → MD
-├── md_to_notebook.py        # MD → Notebook
-└── README.md               # This file
+├── script/              # 轉換工具
+├── HW 1/               # 第一週作業
+├── HW 2/               # 第二週作業（git submodule）
+└── HW 3/               # 第三週作業（git submodule）
 ```
 
-## Example Full Cycle
-```bash
-# 1. Start with notebook from teacher
-uv run python convert.py teacher_demo.ipynb
-# Creates: teacher_demo.md
-
-# 2. Edit and improve
-code teacher_demo.md  # or use vim, nano, etc.
-
-# 3. Convert back
-uv run python convert.py teacher_demo.md
-# Creates: teacher_demo_from_md.ipynb
-
-# 4. Upload to Colab and test
-# 5. Share Colab link with teacher
-```
-
-## Requirements
-- Python 3.6+
-- uv (or regular python)
-- No external dependencies! 🎉
-
----
-*This workflow lets you develop locally, use Claude efficiently, and still submit via Colab!*
+每個作業資料夾都有：
+- `.md` - 可編輯的 Markdown 版本
+- `.ipynb` - Colab notebook
+- `.py` - 本地執行的 Python 腳本
