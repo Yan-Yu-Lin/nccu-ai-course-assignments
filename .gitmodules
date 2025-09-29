@@ -1,3 +1,6 @@
 [submodule "HW 2"]
 	path = HW 2
 	url = https://github.com/Yan-Yu-Lin/nccu-ai-hw2.git
+[submodule "HW 3"]
+	path = HW 3
+	url = https://github.com/Yan-Yu-Lin/nccu-ai-hw3.git
