@@ -162,7 +162,7 @@ def markdown_to_notebook(input_file, output_file=None):
 
     input_path = Path(input_file)
     if output_file is None:
-        output_file = input_path.stem + '_from_md.ipynb'
+        output_file = str(input_path.parent / (input_path.stem + '_from_md.ipynb'))
 
     # Also determine Python output file name
     python_output_file = input_path.with_suffix('.py')

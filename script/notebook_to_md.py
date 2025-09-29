@@ -69,8 +69,8 @@ def notebook_to_markdown(input_file, output_file=None):
         elif cell_type == 'code':
             source = clean_code_source(cell.get('source', ''))
             if source:
-                # Add cell number as comment
-                markdown_lines.append(f"\n## Code Cell {i}\n")
+                # Add blank line before code block for readability
+                markdown_lines.append("\n")
 
                 # Determine language for syntax highlighting
                 lang = 'python'  # default
