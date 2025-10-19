@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Python script generated from: Week6/論文閱讀助手.md
-Generated on: 1760863460.3509536
+Generated on: 1760864521.596105
 Note: Colab-specific commands (!pip, %magic) have been commented out
 """
 
@@ -158,7 +158,10 @@ def chat_with_paper(message, history):
         # 更新對話歷史（包含完整的 output）
         conversation_history.extend(response.output)
 
-        return reply
+        # 更新 Gradio 顯示的歷史（重要！必須回傳完整 history）
+        history = history + [[message, reply]]
+
+        return history
 
     except Exception as e:
         return f"❌ 發生錯誤：{str(e)}\n\n請檢查您的 API Key 是否正確設定。"
@@ -233,7 +236,8 @@ with gr.Blocks(title="論文閱讀助手", theme=gr.themes.Soft()) as demo:
             chatbot = gr.Chatbot(
                 label="💬 對話區",
                 height=500,
-                show_label=True
+                show_label=True,
+                type="tuples"  # 明確指定使用 tuples 格式
             )
 
             msg_input = gr.Textbox(
