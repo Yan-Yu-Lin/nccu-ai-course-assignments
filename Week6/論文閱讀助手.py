@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Python script generated from: Week6/論文閱讀助手.md
-Generated on: 1760865755.1443665
+Generated on: 1760866274.8975089
 Note: Colab-specific commands (!pip, %magic) have been commented out
 """
 
@@ -196,7 +196,7 @@ def upload_pdf(pdf_file):
     Returns:
         str: 上傳狀態訊息
     """
-    global pdf_content, conversation_history
+    global pdf_content
 
     if pdf_file is None:
         return "❌ 請選擇 PDF 檔案"
@@ -204,8 +204,8 @@ def upload_pdf(pdf_file):
     # 提取 PDF 文字
     pdf_content = extract_pdf_text(pdf_file)
 
-    # 重置對話歷史
-    conversation_history = []
+    # 注意：不清空 conversation_history，保留之前的對話
+    # 下次提問時會把 PDF 內容連同對話歷史一起送出
 
     if pdf_content and not pdf_content.startswith("❌"):
         # 計算字數
