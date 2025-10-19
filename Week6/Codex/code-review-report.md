@@ -1,0 +1,14 @@
+**Findings**
+- **High – User turns are never persisted in the API payload** – `論文閱讀助手.py:138-186` only extends `conversation_history` with `response.output`, so subsequent requests send the developer prompt plus prior assistant messages, but none of the prior user questions. The model therefore loses conversational context (and cannot recall earlier questions or PDF instructions), violating the persistence requirement and yielding erratic answers after the first turn.
+- **High – Re-uploading a PDF leaves the model unaware of the new document** – `論文閱讀助手.py:138-152` only injects the PDF text on the very first turn when `conversation_history` is empty. Because `upload_pdf` deliberately keeps `conversation_history` intact (`line 207`), uploading a PDF mid-chat never re-sends the new content, so the assistant keeps answering as if it is still discussing the old document—or none at all.
+- **High – Response API state is misused** – `論文閱讀助手.py:134-179` pushes raw `response.output` items (which contain `type`, `id`, `output_text`, reasoning blocks, etc.) straight back into the next `input`. The Responses API expects user/developer messages (with `input_*` content) or a `previous_response_id`, not previously emitted output records. This can raise schema errors, drop reasoning continuity, and mis-handle future features like tool calls.
+- **Medium – First call can crash when Gradio passes `history=None`** – `論文閱讀助手.py:181-186` appends to `history` without guarding against `None`. The initial submission from `gr.Chatbot` frequently sends `history=None`, which would raise a `TypeError` and stop the app.
+- **Medium – No safeguard when `response.output_text` is empty/None** – `論文閱讀助手.py:174-182` assumes text output always exists. For Responses API, certain outputs (streamed reasoning only, tool calls, moderation errors) give no `output_text`, so the UI would display `None` while still logging raw objects in `conversation_history`.
+- **Low – PDF extraction places `"None"` literals into the transcript** – `論文閱讀助手.py:42-47` concatenates `page.extract_text()` directly; when PyPDF2 returns `None`, the literal `"None"` is injected into `pdf_content`, which the model later treats as text.
+
+**Open Questions**
+- Should a new PDF implicitly reset the conversational turn history or should we maintain dual histories (general chat vs per-PDF) so that mode switching is explicit?
+- How large are the PDFs we expect? If they exceed token limits, we’ll need chunking or tool-based retrieval to stay within the Responses API constraints.
+
+**Overall**
+Robustness hinges on restructuring conversation/state management for the Responses API (store both user and assistant turns, use `previous_response_id` or normalized message objects, and re-hydrate PDF context whenever it changes). Adding basic guards (history initialization, empty outputs) will prevent avoidable crashes before refining the higher-level flow.
